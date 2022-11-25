@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -24,6 +25,8 @@ func WatchSignal() {
 		err := RunUpdate("signal")
 		if err != nil {
 			log.Println("[signal] Update failed")
+			SendToDiscord("[signal] Update failed")
+			continue
 		}
 	}
 }
@@ -35,7 +38,7 @@ func WatchUpdates() {
 			log.Println("[updater] Failed to determine latest local commit")
 			log.Printf("[updater] Error: %s\n", err.Error())
 			log.Println("[updater] WARNING: stopping update thread!")
-			// TODO send signal to process
+			SendToDiscord("[updater] WARNING: cannot determine latest local commit, stopping update thread!")
 			return
 		}
 
@@ -54,6 +57,7 @@ func WatchUpdates() {
 			err := RunUpdate("updater")
 			if err != nil {
 				log.Println("[updater] Retrying to update in 5 minutes...")
+				SendToDiscord("[updater] Update failed")
 				time.Sleep(time.Minute * 5)
 				continue
 			}
@@ -86,6 +90,7 @@ func RunUpdate(context string) error {
 	}
 
 	log.Printf("[%s] Update successfull", context)
+	SendToDiscord(fmt.Sprintf("[%s] Update successful", context))
 
 	UpdateRunning = false
 	CommunicationChannel <- true

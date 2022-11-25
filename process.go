@@ -86,6 +86,7 @@ func Run() error {
 	}
 
 	log.Println("Process started successfully")
+	SendToDiscord("Started process")
 
 	err = cmd.Wait()
 	if err.Error() == "signal: terminated" {

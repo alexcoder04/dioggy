@@ -24,7 +24,7 @@ func GetPrepareCommand() []string {
 	if cmd := os.Getenv("PREPARE_COMMAND"); cmd != "" {
 		return strings.Split(cmd, " ")
 	}
-	return []string{"npm", "install"}
+	return []string{"sh", "-c", "npm install && npm run deployCommands"}
 }
 
 func GetRepoFolder() string {
