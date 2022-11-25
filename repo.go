@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/alexcoder04/friendly/v2"
 )
@@ -59,62 +58,4 @@ func RemoteLatestCommit() (string, error) {
 		return "", err
 	}
 	return *jsonData.SHA, nil
-}
-
-func WatchUpdates() {
-	for {
-		local, err := LocalLatestCommit()
-		if err != nil {
-			log.Println("[updater] Failed to determine latest local commit")
-			log.Printf("[updater] Error: %s\n", err.Error())
-			log.Println("[updater] WARNING: stopping update thread!")
-			// TODO send signal to process
-			return
-		}
-
-		remote, err := RemoteLatestCommit()
-		if err != nil {
-			log.Println("[updater] Failed to determine latest remote commit")
-			log.Printf("[updater] Error: %s\n", err.Error())
-			log.Println("[updater] Retrying to check remote in 5 minutes...")
-			time.Sleep(time.Minute * 5)
-			continue
-		}
-
-		if local != remote {
-			log.Println("[updater] Latest local and remote commits doesn't match, updating...")
-
-			UpdateRunning = true
-
-			err := Stop()
-			if err != nil {
-				UpdateRunning = false
-				log.Println("[updater] Failed to stop the process for update")
-				log.Printf("[updater] Error: %s\n", err.Error())
-				log.Println("[updater] Retrying to update in 5 minutes...")
-				time.Sleep(time.Minute * 5)
-				continue
-			}
-
-			err = UpdateRepo()
-			if err != nil {
-				UpdateRunning = false
-				CommunicationChannel <- true
-
-				log.Println("[updater] Failed to run git pull")
-				log.Printf("[updater] Error: %s\n", err.Error())
-				log.Println("[updater] Retrying to update in 5 minutes...")
-				time.Sleep(time.Minute * 5)
-				continue
-			}
-
-			log.Println("[updater] Update successfull, restarting soon")
-
-			UpdateRunning = false
-			CommunicationChannel <- true
-		}
-
-		log.Println("[updater] Checking for next update in 24 hours...")
-		time.Sleep(time.Hour * 24)
-	}
 }

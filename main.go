@@ -47,6 +47,9 @@ func main() {
 	log.Println("Starting update thread...")
 	go WatchUpdates()
 
+	log.Println("Starting signal thread...")
+	go WatchSignal()
+
 	for {
 		if UpdateRunning {
 			log.Println("Update running, waiting to finish...")

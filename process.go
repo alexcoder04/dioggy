@@ -52,6 +52,8 @@ func DeletePidFile() error {
 }
 
 func Stop() error {
+	log.Println("Stopping process")
+
 	pid, err := ProcessPid()
 	if err != nil {
 		return err
@@ -71,6 +73,7 @@ func Stop() error {
 func Run() error {
 	cmd := exec.Command(EXEC_COMMAND[0], EXEC_COMMAND[1:]...)
 	cmd.Dir = GetRepoFolder()
+	cmd.Env = append(os.Environ(), fmt.Sprintf("DIOGGY_PID=%d", os.Getpid()))
 
 	err := cmd.Start()
 	if err != nil {
@@ -85,11 +88,17 @@ func Run() error {
 	log.Println("Process started successfully")
 
 	err = cmd.Wait()
-	err2 := DeletePidFile()
-	if err2 != nil {
-		log.Println("Warning: failed to delete pid file")
-		log.Printf("Error: %s\n", err.Error())
-		return err2
+	if err.Error() == "signal: terminated" {
+		return nil
+	}
+
+	if ffiles.IsFile(GetPidFile()) {
+		err := DeletePidFile()
+		if err != nil {
+			log.Println("Warning: failed to delete pid file")
+			log.Printf("Error: %s\n", err.Error())
+			return err
+		}
 	}
 	return err
 }
